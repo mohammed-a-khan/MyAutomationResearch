@@ -1,0 +1,61 @@
+:root {
+  /* Brand colors */
+  --primary-color: #94196B;
+  --primary-color-light: #AB3182;
+  --primary-color-dark: #78055A;
+
+  /* Neutral colors */
+  --white: #FFFFFF;
+  --off-white: #F8F9FA;
+  --light-gray: #E9ECEF;
+  --medium-gray: #CED4DA;
+  --dark-gray: #6C757D;
+  --black: #212529;
+
+  /* Semantic colors */
+  --success-color: #28A745;
+  --info-color: #17A2B8;
+  --warning-color: #FFC107;
+  --danger-color: #DC3545;
+
+  /* Typography */
+  --font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-xxl: 32px;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* Border radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.05);
+  
+  /* Z-index levels */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal: 1040;
+  --z-index-popover: 1050;
+  --z-index-tooltip: 1060;
+  
+  /* Transitions */
+  --transition-speed-fast: 150ms;
+  --transition-speed-medium: 300ms;
+  --transition-speed-slow: 500ms;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+} 

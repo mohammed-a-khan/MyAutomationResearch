@@ -1,0 +1,39 @@
+{
+  "name": "cstestforge-playwright",
+  "version": "1.0.0",
+  "description": "CSTestForge Playwright TypeScript test automation framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui",
+    "report": "npx playwright show-report",
+    "compile": "tsc"
+  },
+  "keywords": [
+    "playwright",
+    "automation",
+    "testing",
+    "typescript",
+    "cstestforge"
+  ],
+  "author": "CSTestForge Team",
+  "license": "MIT",
+  "dependencies": {
+    "@cucumber/gherkin": "^32.1.0",
+    "@cucumber/gherkin-utils": "^9.2.0",
+    "@playwright/test": "^1.38.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
+    "cucumber": "^6.0.5",
+    "express": "^5.1.0",
+    "gherkin": "^9.0.0",
+    "playwright": "^1.38.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "typescript": "^5.2.2"
+  }
+}

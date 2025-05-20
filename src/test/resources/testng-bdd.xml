@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="CSTestForge BDD Suite" parallel="tests" thread-count="2">
+    <parameter name="featuresPath" value="src/test/resources/features" />
+    <parameter name="gluePackage" value="com.cstestforge.framework.selenium.example_test.bdd.steps" />
+    
+    <test name="BDD Login Tests">
+        <classes>
+            <class name="com.cstestforge.framework.selenium.bdd.CSBDDRunner" />
+        </classes>
+    </test>
+</suite> 

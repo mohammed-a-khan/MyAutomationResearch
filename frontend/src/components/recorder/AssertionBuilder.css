@@ -1,0 +1,106 @@
+.assertion-builder {
+  width: 100%;
+}
+
+.assertion-tabs {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.assertion-tabs-list {
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.assertion-tab {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  border-radius: 0.25rem 0.25rem 0 0;
+  margin-right: 0.25rem;
+  background-color: var(--light-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+.assertion-tab.active {
+  background-color: var(--primary-color-light);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.assertion-tab-name {
+  margin-right: 0.5rem;
+}
+
+.assertion-tab-delete {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.assertion-tab-delete:hover {
+  background-color: var(--danger-color-light);
+  color: var(--danger-color);
+}
+
+.assertion-tab-add {
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assertion-tab-add:hover {
+  background-color: var(--light-hover-bg);
+}
+
+.assertion-editor {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background-color: var(--light-bg);
+  margin-bottom: 1rem;
+}
+
+.assertion-preview {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background-color: var(--light-bg);
+}
+
+.assertion-preview h6 {
+  margin-bottom: 0.5rem;
+}
+
+.code-preview {
+  font-family: monospace;
+  padding: 0.5rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.condition-true {
+  background-color: var(--success-color-light);
+  color: var(--success-color);
+}
+
+.condition-false {
+  background-color: var(--warning-color-light);
+  color: var(--warning-color);
+} 

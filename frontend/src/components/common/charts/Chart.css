@@ -1,0 +1,194 @@
+.chart-container {
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Grid lines */
+.chart-grid-line {
+  stroke: #E5E7EB;
+  stroke-width: 1;
+  stroke-dasharray: 4, 4;
+}
+
+/* Axes */
+.chart-axis {
+  stroke: #9CA3AF;
+  stroke-width: 1;
+}
+
+.chart-axis-title {
+  fill: #4B5563;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Ticks */
+.chart-tick {
+  stroke: #9CA3AF;
+  stroke-width: 1;
+}
+
+.chart-tick-label {
+  fill: #6B7280;
+  font-size: 11px;
+}
+
+/* Lines */
+.chart-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.2s ease;
+}
+
+/* Points */
+.chart-point {
+  transition: r 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-point:hover {
+  r: 6;
+}
+
+/* Area fills */
+.chart-area {
+  opacity: 0.1;
+  transition: opacity 0.2s ease;
+}
+
+/* Legend */
+.chart-legend {
+  font-size: 12px;
+}
+
+.chart-legend-bg {
+  fill: #FFFFFF;
+  stroke: #E5E7EB;
+  stroke-width: 1;
+  opacity: 0.9;
+}
+
+.chart-legend-text {
+  fill: #4B5563;
+  font-size: 11px;
+}
+
+/* Tooltip */
+.chart-tooltip {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #374151;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.chart-tooltip-visible {
+  opacity: 1;
+}
+
+/* Bar chart specific */
+.chart-bar {
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-bar:hover {
+  opacity: 0.8;
+}
+
+/* Pie chart specific */
+.chart-pie-slice {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.chart-pie-slice:hover {
+  opacity: 0.85;
+  transform: translateY(-3px);
+}
+
+.chart-pie-label {
+  fill: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.chart-pie-label-outside {
+  fill: #4B5563;
+  font-size: 11px;
+}
+
+/* Animations */
+@keyframes chartLineAnimation {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes chartAreaAnimation {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.1;
+  }
+}
+
+@keyframes chartPointAnimation {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes chartBarAnimation {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes chartPieAnimation {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .chart-axis-title {
+    font-size: 11px;
+  }
+  
+  .chart-tick-label {
+    font-size: 10px;
+  }
+  
+  .chart-legend-text {
+    font-size: 10px;
+  }
+} 

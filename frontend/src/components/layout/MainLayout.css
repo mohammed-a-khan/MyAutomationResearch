@@ -1,0 +1,137 @@
+.main-layout {
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar content";
+  grid-template-columns: 250px 1fr;
+  grid-template-rows: 60px 1fr;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--light-gray);
+  transition: grid-template-columns var(--transition-speed-medium) var(--transition-timing);
+}
+
+/* Collapsed sidebar */
+.sidebar-collapsed {
+  grid-template-columns: 64px 1fr;
+}
+
+/* Main content */
+.main-content {
+  grid-area: content;
+  overflow: auto;
+  padding: var(--spacing-md);
+  position: relative;
+}
+
+.content-wrapper {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.content-container {
+  background-color: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-md);
+  flex: 1;
+}
+
+/* Page header */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.page-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--black);
+  margin: 0;
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+  font-size: var(--font-size-sm);
+  color: var(--dark-gray);
+}
+
+.breadcrumbs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.breadcrumbs-item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbs-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color var(--transition-speed-fast) var(--transition-timing);
+}
+
+.breadcrumbs-link:hover {
+  color: var(--primary-color-dark);
+  text-decoration: underline;
+}
+
+.breadcrumbs-text {
+  color: var(--dark-gray);
+}
+
+.breadcrumbs-separator {
+  margin: 0 var(--spacing-xs);
+  color: var(--medium-gray);
+}
+
+/* Mobile layout */
+.mobile-layout {
+  grid-template-columns: 0 1fr;
+}
+
+.mobile-layout.mobile-sidebar-open {
+  grid-template-columns: 1fr 0;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  .main-layout {
+    grid-template-columns: 0 1fr;
+  }
+  
+  .main-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .content-container {
+    padding: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 576px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+} 

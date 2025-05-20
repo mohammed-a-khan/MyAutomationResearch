@@ -1,0 +1,157 @@
+/* Dashboard Styles */
+.dashboard {
+  padding: var(--spacing-md);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+/* Dashboard Stats */
+.dashboard-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.stat-card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  min-width: 180px;
+  flex: 1;
+  text-align: center;
+  border-top: 4px solid var(--medium-gray);
+}
+
+.stat-card.success {
+  border-top-color: var(--success-color);
+}
+
+.stat-card.danger {
+  border-top-color: var(--danger-color);
+}
+
+.stat-card.warning {
+  border-top-color: var(--warning-color);
+}
+
+.stat-card.info {
+  border-top-color: var(--info-color);
+}
+
+.stat-value {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+  color: var(--dark-gray);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Dashboard Content Layout */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 992px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Recent Tests */
+.recent-tests {
+  margin-bottom: var(--spacing-lg);
+}
+
+.recent-tests .table {
+  margin-bottom: 0;
+}
+
+.view-all {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: right;
+  font-size: var(--font-size-sm);
+  border-top: 1px solid var(--light-gray);
+}
+
+/* Quick Actions Card */
+.quick-actions {
+  margin-bottom: var(--spacing-lg);
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+}
+
+/* Environment Status Card */
+.env-status-list {
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.env-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.env-status-item:last-child {
+  border-bottom: none;
+}
+
+.env-name {
+  font-weight: 500;
+}
+
+/* Empty State Message */
+.no-data-message {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--dark-gray);
+}
+
+.no-data-message p {
+  margin-bottom: var(--spacing-md);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-stats {
+    flex-direction: column;
+  }
+  
+  .stat-card {
+    width: 100%;
+  }
+  
+  .dashboard-actions {
+    flex-direction: column;
+  }
+} 

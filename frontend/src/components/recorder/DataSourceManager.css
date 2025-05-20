@@ -1,0 +1,41 @@
+.data-source-manager {
+  width: 100%;
+}
+
+.data-preview {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: var(--light-bg);
+}
+
+.data-preview h6 {
+  margin-bottom: 1rem;
+}
+
+.data-preview table {
+  font-size: 0.875rem;
+}
+
+.data-preview th {
+  font-weight: 600;
+  background-color: var(--light-hover-bg);
+}
+
+.data-preview td {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.variable-mapping-item {
+  align-items: center;
+}
+
+.variable-mappings {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: var(--light-bg);
+} 

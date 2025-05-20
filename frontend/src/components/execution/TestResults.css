@@ -1,0 +1,185 @@
+.test-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.test-result-wrapper {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.test-result-wrapper:hover {
+  transform: translateY(-2px);
+}
+
+.test-result-wrapper.selected .test-result-item {
+  border-color: #1890ff;
+  background-color: #e6f7ff;
+}
+
+.test-result-item {
+  padding: 16px;
+  border-left: 3px solid #d9d9d9;
+  transition: all 0.3s;
+}
+
+.test-result-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.test-result-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.test-result-status {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-text {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.test-result-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.test-result-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.meta-label {
+  color: #666;
+  margin-right: 4px;
+}
+
+.meta-value {
+  font-weight: 500;
+}
+
+.test-result-error {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+.error-message {
+  color: #ff4d4f;
+  font-size: 14px;
+}
+
+.empty-results {
+  padding: 40px;
+  text-align: center;
+}
+
+.empty-results-message {
+  color: #666;
+  font-size: 16px;
+}
+
+/* Status Colors */
+.status-passed {
+  border-color: #52c41a;
+}
+
+.status-passed .status-indicator {
+  background-color: #52c41a;
+}
+
+.status-passed .status-text {
+  color: #52c41a;
+}
+
+.status-failed {
+  border-color: #ff4d4f;
+}
+
+.status-failed .status-indicator {
+  background-color: #ff4d4f;
+}
+
+.status-failed .status-text {
+  color: #ff4d4f;
+}
+
+.status-running {
+  border-color: #1890ff;
+}
+
+.status-running .status-indicator {
+  background-color: #1890ff;
+  animation: pulse 1.5s infinite;
+}
+
+.status-running .status-text {
+  color: #1890ff;
+}
+
+.status-queued {
+  border-color: #d9d9d9;
+}
+
+.status-queued .status-indicator {
+  background-color: #d9d9d9;
+}
+
+.status-queued .status-text {
+  color: #666;
+}
+
+.status-skipped {
+  border-color: #faad14;
+}
+
+.status-skipped .status-indicator {
+  background-color: #faad14;
+}
+
+.status-skipped .status-text {
+  color: #faad14;
+}
+
+.status-error {
+  border-color: #ff4d4f;
+}
+
+.status-error .status-indicator {
+  background-color: #ff4d4f;
+}
+
+.status-error .status-text {
+  color: #ff4d4f;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+} 

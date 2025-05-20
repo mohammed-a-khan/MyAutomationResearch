@@ -1,0 +1,63 @@
+.step-group-manager {
+  width: 100%;
+}
+
+.step-selection {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: var(--light-bg);
+}
+
+.step-selection h6 {
+  margin-bottom: 0.5rem;
+}
+
+.step-selection-list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: white;
+}
+
+.step-selection-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.step-selection-item:last-child {
+  border-bottom: none;
+}
+
+.step-selection-item:hover {
+  background-color: var(--light-hover-bg);
+}
+
+.step-selection-item.selected {
+  background-color: var(--primary-color-light);
+}
+
+.step-selection-checkbox {
+  margin-right: 0.75rem;
+}
+
+.step-selection-details {
+  flex: 1;
+}
+
+.step-selection-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.step-selection-description {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+} 

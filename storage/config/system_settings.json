@@ -1,0 +1,17 @@
+{
+  "defaultBrowser" : "chrome",
+  "defaultTimeout" : 30,
+  "maxRetries" : 1,
+  "screenshotOnError" : true,
+  "logsEnabled" : true,
+  "defaultEnvironment" : "DEV",
+  "parallelExecutionEnabled" : false,
+  "maxParallelExecutions" : 4,
+  "emailNotificationsEnabled" : false,
+  "emailRecipients" : "",
+  "slackIntegrationEnabled" : false,
+  "slackWebhook" : "",
+  "notifyOnSuccess" : false,
+  "notifyOnFailure" : true,
+  "customSettings" : { }
+}

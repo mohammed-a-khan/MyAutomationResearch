@@ -1,0 +1,78 @@
+/* API Testing Module Styles */
+
+.api-testing-panel {
+  padding: 1rem;
+}
+
+.api-request-list {
+  margin-bottom: 2rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.api-request-editor {
+  padding: 1rem;
+}
+
+.api-request-runner {
+  padding: 1rem;
+}
+
+.api-history-viewer {
+  padding: 1rem;
+}
+
+/* Response styling */
+.response-body, .request-body {
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  font-family: monospace;
+}
+
+.response-headers, .request-headers {
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  font-family: monospace;
+}
+
+/* Assertion styling */
+.assertion-item {
+  border-bottom: 1px solid #e9ecef;
+  padding: 0.5rem 0;
+}
+
+.assertion-passed {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.assertion-failed {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.assertion-status {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+/* General utility classes */
+.text-success {
+  color: #28a745;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.text-warning {
+  color: #ffc107;
+}
+
+.text-info {
+  color: #17a2b8;
+} 

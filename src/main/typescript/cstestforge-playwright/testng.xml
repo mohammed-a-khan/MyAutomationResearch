@@ -1,0 +1,37 @@
+<!--
+    This is a sample testng.xml file for the CSTestForge Playwright framework.
+    It mimics the structure of TestNG but is actually executed through the Playwright runner.
+-->
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="CSTestForge Playwright Test Suite" parallel="tests" thread-count="2">
+    <!-- Example of configuration parameters -->
+    <parameter name="browserType" value="chromium" />
+    <parameter name="headless" value="true" />
+    <parameter name="baseUrl" value="https://example.com" />
+    
+    <!-- Test group definitions -->
+    <test name="Login Tests">
+        <groups>
+            <run>
+                <include name="smoke" />
+                <include name="authentication" />
+            </run>
+        </groups>
+        <classes>
+            <class name="example_test.test.LoginTest" />
+        </classes>
+    </test>
+    
+    <!-- BDD test execution -->
+    <test name="BDD Tests">
+        <parameter name="featureFile" value="features/login.feature" />
+        <classes>
+            <class name="bdd.BDDRunner" />
+        </classes>
+    </test>
+    
+    <!-- Listeners for reporting and test handling -->
+    <listeners>
+        <listener class-name="reporting.CSPlaywrightReporting" />
+    </listeners>
+</suite> 

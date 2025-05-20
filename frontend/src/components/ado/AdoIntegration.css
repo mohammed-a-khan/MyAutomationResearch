@@ -1,0 +1,258 @@
+.ado-integration-container {
+  padding: 20px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.ado-integration-content {
+  margin-top: 20px;
+}
+
+.message {
+  padding: 12px;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+.message.success {
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #52c41a;
+}
+
+.message.error {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #ff4d4f;
+}
+
+.message.info {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  color: #1890ff;
+}
+
+/* Connection form styles */
+.connections-card {
+  margin-bottom: 20px;
+}
+
+.connections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.connections-header h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.connection-controls {
+  width: 300px;
+}
+
+.connection-form {
+  margin-top: 20px;
+}
+
+.connection-form h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.checkbox-field label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.validation-message {
+  padding: 12px;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+.validation-message.success {
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #52c41a;
+}
+
+.validation-message.error {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #ff4d4f;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Test sync config styles */
+.test-sync-config {
+  margin-top: 16px;
+}
+
+.sync-form {
+  margin-bottom: 24px;
+}
+
+.sync-status {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.sync-status h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.status-item {
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.status-item.full-width {
+  grid-column: span 2;
+}
+
+.status-label {
+  font-weight: 500;
+  margin-right: 8px;
+  color: #666;
+}
+
+.status-value {
+  font-weight: normal;
+}
+
+.status-success {
+  color: #52c41a;
+}
+
+.status-failed {
+  color: #ff4d4f;
+}
+
+.status-in-progress {
+  color: #1890ff;
+}
+
+.status-not-started {
+  color: #666;
+}
+
+/* Pipeline config styles */
+.pipeline-config {
+  margin-top: 16px;
+}
+
+.pipeline-form {
+  margin-bottom: 24px;
+}
+
+.pipeline-info {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.pipeline-info h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.info-item {
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.info-label {
+  font-weight: 500;
+  margin-right: 8px;
+  color: #666;
+}
+
+.info-value {
+  font-weight: normal;
+}
+
+.pipeline-notes {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.pipeline-notes h4 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.pipeline-notes ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.pipeline-notes li {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #666;
+} 

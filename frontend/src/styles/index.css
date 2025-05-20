@@ -1,0 +1,10 @@
+/* Import CSS Variables */
+@import './variables.css';
+
+/* Import Layout Styles */
+@import './layout.css';
+
+/* Import Component Styles */
+@import './components.css';
+
+/* Additional module-specific styles will be imported in their respective components */ 

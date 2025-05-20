@@ -1,0 +1,48 @@
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.radio-group-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.radio-group-options {
+  display: flex;
+  gap: 1rem;
+}
+
+.radio-group-horizontal .radio-group-options {
+  flex-direction: row;
+  align-items: center;
+}
+
+.radio-group-vertical .radio-group-options {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.radio-group-error {
+  font-size: 0.75rem;
+  color: #DC2626;
+}
+
+.radio-group-helper-text {
+  font-size: 0.75rem;
+  color: #6B7280;
+}
+
+.radio-group-full-width {
+  width: 100%;
+}
+
+.radio-group-full-width .radio-group-options {
+  width: 100%;
+}
+
+.radio-group-full-width .radio-group-options > * {
+  flex: 1;
+} 

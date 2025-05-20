@@ -1,0 +1,16 @@
+# CSTestForge retry configuration
+# Copy this file to retry-config.properties and customize as needed
+
+# Number of retry attempts for failed tests (default: 2)
+retry.count=2
+
+# Enable or disable retry mechanism globally (default: true)
+retry.enabled=true
+
+# Comma-separated list of class names to include for retries
+# If specified, only these classes will be retried
+# Example: com.example.tests.LoginTest,com.example.tests.ProfileTest
+retry.only.classes=
+
+# Comma-separated list of class names to exclude from retries
+# Example: com.example.tests.SlowTest,com.example.tests.UnstableTest 

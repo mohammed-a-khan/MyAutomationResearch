@@ -1,0 +1,101 @@
+.app-sidebar {
+  width: 250px;
+  background-color: var(--white);
+  border-right: 1px solid var(--light-gray);
+  height: 100%;
+  overflow-y: auto;
+  transition: width var(--transition-speed-medium) var(--transition-timing);
+  z-index: var(--z-index-sticky);
+}
+
+.app-sidebar.collapsed {
+  width: 64px;
+}
+
+.sidebar-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-md);
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.sidebar-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-left: var(--spacing-sm);
+}
+
+.sidebar-toggle {
+  padding: var(--spacing-sm);
+  background: transparent;
+  border: none;
+  color: var(--dark-gray);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-toggle:hover {
+  color: var(--primary-color);
+}
+
+.sidebar-nav {
+  padding: var(--spacing-md) 0;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--dark-gray);
+  transition: background-color var(--transition-speed-fast) var(--transition-timing),
+              color var(--transition-speed-fast) var(--transition-timing);
+  text-decoration: none;
+}
+
+.sidebar-nav-item:hover {
+  background-color: rgba(148, 25, 107, 0.05);
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.sidebar-nav-item.active {
+  background-color: rgba(148, 25, 107, 0.1);
+  color: var(--primary-color);
+  font-weight: 500;
+  border-left: 3px solid var(--primary-color);
+}
+
+.sidebar-nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+}
+
+.app-sidebar.collapsed .sidebar-nav-icon {
+  margin-right: 0;
+}
+
+.app-sidebar.collapsed .sidebar-nav-item {
+  justify-content: center;
+  padding: var(--spacing-sm);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed;
+    left: -250px;
+  }
+  
+  .app-sidebar.open {
+    left: 0;
+  }
+} 

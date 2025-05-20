@@ -1,0 +1,296 @@
+.test-runner-container {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.error-message {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: #ff4d4f;
+}
+
+.test-runner-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .test-runner-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.test-selection-panel {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px);
+}
+
+.test-execution-panel {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px);
+}
+
+.test-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.test-cases-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 16px;
+}
+
+.no-tests-message {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+}
+
+.test-case-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.test-case-item {
+  display: flex;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.test-case-item:hover {
+  background-color: #f9f9f9;
+}
+
+.test-case-item.selected {
+  background-color: #e6f7ff;
+  border-color: #91d5ff;
+}
+
+.test-case-checkbox {
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.test-case-details {
+  flex: 1;
+}
+
+.test-case-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.test-case-suite {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.test-case-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.test-tag {
+  background-color: #f0f0f0;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #666;
+}
+
+.test-selection-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.environment-selector {
+  margin-bottom: 8px;
+}
+
+.selection-stats {
+  color: #666;
+  font-size: 14px;
+}
+
+.run-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.no-execution-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  text-align: center;
+  padding: 40px;
+}
+
+/* TestExecutionControls component styles */
+.execution-controls {
+  margin-bottom: 16px;
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.execution-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.execution-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-indicator.running {
+  background-color: #52c41a;
+  animation: pulse 1.5s infinite;
+}
+
+.status-indicator.completed {
+  background-color: #1890ff;
+}
+
+.status-indicator.failed {
+  background-color: #f5222d;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.execution-progress {
+  margin-top: 12px;
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #1890ff;
+  transition: width 0.3s ease;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #666;
+}
+
+/* TestResultsList component styles */
+.test-results-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.test-result-item {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.test-result-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.test-result-name {
+  font-weight: 500;
+}
+
+.test-result-status {
+  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.status-passed {
+  background-color: #f6ffed;
+  color: #52c41a;
+}
+
+.status-failed {
+  background-color: #fff2f0;
+  color: #f5222d;
+}
+
+.status-running {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.status-queued {
+  background-color: #f9f9f9;
+  color: #666;
+}
+
+.test-result-details {
+  font-size: 14px;
+  color: #666;
+}
+
+.test-error {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #fff2f0;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+} 
