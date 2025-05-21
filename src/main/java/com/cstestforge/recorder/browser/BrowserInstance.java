@@ -1,5 +1,6 @@
 package com.cstestforge.recorder.browser;
 
+import com.cstestforge.recorder.model.BrowserType;
 import com.cstestforge.recorder.model.Viewport;
 
 import java.util.Map;
@@ -131,4 +132,11 @@ public interface BrowserInstance {
      * @return True if the condition was satisfied within the timeout
      */
     boolean waitForCondition(String conditionScript, long timeoutMs);
+    
+    /**
+     * Get the type of this browser instance.
+     *
+     * @return The browser type
+     */
+    BrowserType getBrowserType();
 } 

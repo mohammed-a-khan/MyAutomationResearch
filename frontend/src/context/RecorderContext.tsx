@@ -39,22 +39,20 @@ type RecorderAction =
   | { type: 'SET_ERROR'; payload: { error: string | null } }
   | { type: 'SET_LOADING'; payload: { isLoading: boolean } }
   | { type: 'RESET_STATE' }
+  | { type: 'SET_CONNECTION_STATUS'; payload: { connectionStatus: ConnectionStatus } }
   // New actions for advanced features
   | { type: 'ADD_CONDITION'; payload: { parentEventId: string; condition: Condition } }
   | { type: 'UPDATE_CONDITION'; payload: { eventId: string; condition: Condition } }
   | { type: 'ADD_LOOP'; payload: { parentEventId: string; loop: Loop } }
   | { type: 'UPDATE_LOOP'; payload: { eventId: string; loop: Loop } }
-  | { type: 'ADD_DATA_SOURCE'; payload: { dataSource: DataSource } }
-  | { type: 'UPDATE_DATA_SOURCE'; payload: { dataSourceId: string; updates: Partial<DataSource> } }
-  | { type: 'DELETE_DATA_SOURCE'; payload: { dataSourceId: string } }
-  | { type: 'ADD_VARIABLE_BINDING'; payload: { parentEventId: string; variableBinding: VariableBinding } }
-  | { type: 'UPDATE_VARIABLE_BINDING'; payload: { eventId: string; variableBinding: VariableBinding } }
-  | { type: 'ADD_ASSERTION'; payload: { parentEventId: string; assertion: AssertionConfig } }
-  | { type: 'UPDATE_ASSERTION'; payload: { eventId: string; assertionId: string; updates: Partial<AssertionConfig> } }
-  | { type: 'DELETE_ASSERTION'; payload: { eventId: string; assertionId: string } }
-  | { type: 'CREATE_STEP_GROUP'; payload: { name: string; eventIds: string[] } }
-  | { type: 'UPDATE_STEP_GROUP'; payload: { groupId: string; updates: Partial<StepGroup> } }
-  | { type: 'DELETE_STEP_GROUP'; payload: { groupId: string } };
+  | { type: 'ADD_DATA_SOURCE'; payload: { eventId: string; dataSource: DataSource } }
+  | { type: 'UPDATE_DATA_SOURCE'; payload: { eventId: string; dataSource: DataSource } }
+  | { type: 'ADD_VARIABLE_BINDING'; payload: { eventId: string; binding: VariableBinding } }
+  | { type: 'UPDATE_VARIABLE_BINDING'; payload: { eventId: string; binding: VariableBinding } }
+  | { type: 'ADD_ASSERTION'; payload: { eventId: string; assertion: AssertionConfig } }
+  | { type: 'UPDATE_ASSERTION'; payload: { eventId: string; assertion: AssertionConfig } }
+  | { type: 'GROUP_EVENTS'; payload: { eventIds: string[]; groupConfig: StepGroup } }
+  | { type: 'UNGROUP_EVENTS'; payload: { groupId: string } };
 
 // Define initial state
 const initialState: RecorderContextState = {
@@ -65,7 +63,8 @@ const initialState: RecorderContextState = {
   inspectedElement: null,
   generatedCode: null,
   error: null,
-  isLoading: false
+  isLoading: false,
+  connectionStatus: ConnectionStatus.DISCONNECTED
 };
 
 // Reducer function
@@ -105,7 +104,7 @@ const recorderReducer = (state: RecorderContextState, action: RecorderAction): R
         ...state,
         session: action.payload.session,
         status: action.payload.session.status,
-        events: action.payload.session.events,
+        events: action.payload.session.events || state.events,
         isLoading: false
       };
     
@@ -130,18 +129,15 @@ const recorderReducer = (state: RecorderContextState, action: RecorderAction): R
           event.id === action.payload.eventId 
             ? { ...event, ...action.payload.updates } 
             : event
-        ),
-        selectedEvent: state.selectedEvent?.id === action.payload.eventId
-          ? { ...state.selectedEvent, ...action.payload.updates }
-          : state.selectedEvent
+        )
       };
     
     case 'DELETE_EVENT':
       return {
         ...state,
         events: state.events.filter(event => event.id !== action.payload.eventId),
-        selectedEvent: state.selectedEvent?.id === action.payload.eventId
-          ? null
+        selectedEvent: state.selectedEvent?.id === action.payload.eventId 
+          ? null 
           : state.selectedEvent
       };
     
@@ -150,14 +146,16 @@ const recorderReducer = (state: RecorderContextState, action: RecorderAction): R
         ...state,
         events: action.payload.eventIds.map(id => 
           state.events.find(event => event.id === id)!
-        ).filter(Boolean)
+        )
       };
     
     case 'SET_EVENTS':
       return {
         ...state,
         events: action.payload.events,
-        isLoading: false
+        selectedEvent: action.payload.events.length > 0 
+          ? action.payload.events[action.payload.events.length - 1] 
+          : null
       };
     
     case 'SELECT_EVENT':
@@ -192,348 +190,78 @@ const recorderReducer = (state: RecorderContextState, action: RecorderAction): R
         isLoading: action.payload.isLoading
       };
     
+    case 'SET_CONNECTION_STATUS':
+      return {
+        ...state,
+        connectionStatus: action.payload.connectionStatus
+      };
+    
     case 'RESET_STATE':
-      return initialState;
-    
-    case 'ADD_CONDITION': {
-      const { parentEventId, condition } = action.payload;
-      const newEvent: RecordedEvent = {
-        id: `condition-${Date.now()}`,
-        type: RecordedEventType.CONDITIONAL,
-        timestamp: Date.now(),
-        url: state.session?.currentUrl || '',
-        condition,
-        order: state.events.length + 1,
-        parentId: parentEventId
-      };
-      
       return {
-        ...state,
-        events: [...state.events, newEvent]
+        ...initialState
       };
-    }
     
-    case 'UPDATE_CONDITION': {
-      const { eventId, condition } = action.payload;
-      return {
-        ...state,
-        events: state.events.map(event => 
-          event.id === eventId 
-            ? { ...event, condition } 
-            : event
-        )
-      };
-    }
-    
-    case 'ADD_LOOP': {
-      const { parentEventId, loop } = action.payload;
-      const newEvent: RecordedEvent = {
-        id: `loop-${Date.now()}`,
-        type: RecordedEventType.LOOP,
-        timestamp: Date.now(),
-        url: state.session?.currentUrl || '',
-        loop,
-        order: state.events.length + 1,
-        parentId: parentEventId
-      };
-      
-      return {
-        ...state,
-        events: [...state.events, newEvent]
-      };
-    }
-    
-    case 'UPDATE_LOOP': {
-      const { eventId, loop } = action.payload;
-      return {
-        ...state,
-        events: state.events.map(event => 
-          event.id === eventId 
-            ? { ...event, loop } 
-            : event
-        )
-      };
-    }
-    
-    case 'ADD_DATA_SOURCE': {
-      const { dataSource } = action.payload;
-      const newEvent: RecordedEvent = {
-        id: `data-source-${Date.now()}`,
-        type: RecordedEventType.DATA_SOURCE,
-        timestamp: Date.now(),
-        url: state.session?.currentUrl || '',
-        dataSource,
-        order: state.events.length + 1
-      };
-      
-      return {
-        ...state,
-        events: [...state.events, newEvent]
-      };
-    }
-    
-    case 'UPDATE_DATA_SOURCE': {
-      const { dataSourceId, updates } = action.payload;
-      return {
-        ...state,
-        events: state.events.map(event => 
-          event.id === dataSourceId && event.dataSource
-            ? { 
-                ...event, 
-                dataSource: { ...event.dataSource, ...updates } 
-              } 
-            : event
-        )
-      };
-    }
-    
-    case 'DELETE_DATA_SOURCE': {
-      const { dataSourceId } = action.payload;
-      return {
-        ...state,
-        events: state.events.filter(event => event.id !== dataSourceId)
-      };
-    }
-    
-    case 'ADD_VARIABLE_BINDING': {
-      const { parentEventId, variableBinding } = action.payload;
-      const newEvent: RecordedEvent = {
-        id: `capture-${Date.now()}`,
-        type: RecordedEventType.CAPTURE,
-        timestamp: Date.now(),
-        url: state.session?.currentUrl || '',
-        variableBinding,
-        order: state.events.length + 1,
-        parentId: parentEventId
-      };
-      
-      return {
-        ...state,
-        events: [...state.events, newEvent]
-      };
-    }
-    
-    case 'UPDATE_VARIABLE_BINDING': {
-      const { eventId, variableBinding } = action.payload;
-      return {
-        ...state,
-        events: state.events.map(event => 
-          event.id === eventId 
-            ? { ...event, variableBinding } 
-            : event
-        )
-      };
-    }
-    
-    case 'ADD_ASSERTION': {
-      const { parentEventId, assertion } = action.payload;
-      // Find the parent event
-      const parentEvent = state.events.find(e => e.id === parentEventId);
-      
-      if (!parentEvent) {
-        return state;
-      }
-      
-      // Add the assertion to the parent event
-      const updatedEvent = {
-        ...parentEvent,
-        assertions: [
-          ...(parentEvent.assertions || []),
-          assertion
-        ]
-      };
-      
-      return {
-        ...state,
-        events: state.events.map(event => 
-          event.id === parentEventId 
-            ? updatedEvent
-            : event
-        ),
-        selectedEvent: state.selectedEvent?.id === parentEventId
-          ? updatedEvent
-          : state.selectedEvent
-      };
-    }
-    
-    case 'UPDATE_ASSERTION': {
-      const { eventId, assertionId, updates } = action.payload;
-      // Find the event containing the assertion
-      const event = state.events.find(e => e.id === eventId);
-      
-      if (!event || !event.assertions) {
-        return state;
-      }
-      
-      // Update the specific assertion
-      const updatedAssertions = event.assertions.map(assertion => 
-        assertion.id === assertionId 
-          ? { ...assertion, ...updates }
-          : assertion
-      );
-      
-      // Update the event with the new assertions
-      const updatedEvent = {
-        ...event,
-        assertions: updatedAssertions
-      };
-      
-      return {
-        ...state,
-        events: state.events.map(e => 
-          e.id === eventId 
-            ? updatedEvent
-            : e
-        ),
-        selectedEvent: state.selectedEvent?.id === eventId
-          ? updatedEvent
-          : state.selectedEvent
-      };
-    }
-    
-    case 'DELETE_ASSERTION': {
-      const { eventId, assertionId } = action.payload;
-      // Find the event containing the assertion
-      const event = state.events.find(e => e.id === eventId);
-      
-      if (!event || !event.assertions) {
-        return state;
-      }
-      
-      // Filter out the specific assertion
-      const updatedAssertions = event.assertions.filter(assertion => 
-        assertion.id !== assertionId
-      );
-      
-      // Update the event with the filtered assertions
-      const updatedEvent = {
-        ...event,
-        assertions: updatedAssertions
-      };
-      
-      return {
-        ...state,
-        events: state.events.map(e => 
-          e.id === eventId 
-            ? updatedEvent
-            : e
-        ),
-        selectedEvent: state.selectedEvent?.id === eventId
-          ? updatedEvent
-          : state.selectedEvent
-      };
-    }
-    
-    case 'CREATE_STEP_GROUP': {
-      const { name, eventIds } = action.payload;
-      const groupId = `group-${Date.now()}`;
-      
-      const newGroup: StepGroup = {
-        id: groupId,
-        name,
-        eventIds,
-        type: 'group',
-        collapsed: false
-      };
-      
-      const newEvent: RecordedEvent = {
-        id: groupId,
-        type: RecordedEventType.GROUP,
-        timestamp: Date.now(),
-        url: state.session?.currentUrl || '',
-        stepGroup: newGroup,
-        order: state.events.length + 1
-      };
-      
-      // Update child events to reference their parent
-      const updatedEvents = state.events.map(event => 
-        eventIds.includes(event.id)
-          ? { ...event, parentId: groupId }
-          : event
-      );
-      
-      return {
-        ...state,
-        events: [...updatedEvents, newEvent]
-      };
-    }
-    
-    case 'UPDATE_STEP_GROUP': {
-      const { groupId, updates } = action.payload;
-      return {
-        ...state,
-        events: state.events.map(event => 
-          event.id === groupId && event.stepGroup
-            ? { 
-                ...event, 
-                stepGroup: { ...event.stepGroup, ...updates } 
-              } 
-            : event
-        )
-      };
-    }
-    
-    case 'DELETE_STEP_GROUP': {
-      const { groupId } = action.payload;
-      
-      // Find the group event
-      const groupEvent = state.events.find(e => e.id === groupId);
-      
-      if (!groupEvent || !groupEvent.stepGroup) {
-        return state;
-      }
-      
-      // Remove parent references from child events
-      const updatedEvents = state.events.map(event => 
-        event.parentId === groupId
-          ? { ...event, parentId: undefined }
-          : event
-      );
-      
-      // Remove the group event itself
-      return {
-        ...state,
-        events: updatedEvents.filter(event => event.id !== groupId)
-      };
-    }
+    // Advanced feature handlers
+    case 'ADD_CONDITION':
+    case 'UPDATE_CONDITION':
+    case 'ADD_LOOP':
+    case 'UPDATE_LOOP':
+    case 'ADD_DATA_SOURCE':
+    case 'UPDATE_DATA_SOURCE':
+    case 'ADD_VARIABLE_BINDING':
+    case 'UPDATE_VARIABLE_BINDING':
+    case 'ADD_ASSERTION':
+    case 'UPDATE_ASSERTION':
+    case 'GROUP_EVENTS':
+    case 'UNGROUP_EVENTS':
+      // These would be implemented with specific logic for each advanced feature
+      console.log(`Action ${action.type} not fully implemented yet`);
+      return state;
     
     default:
+      console.warn('Unknown action type:', (action as any).type);
       return state;
   }
 };
 
-// Context value interface
+// Define the context value type
 interface RecorderContextValue {
   state: RecorderContextState;
   startRecording: (options: RecordingOptions) => Promise<void>;
   stopRecording: () => Promise<void>;
   pauseRecording: () => Promise<void>;
   resumeRecording: () => Promise<void>;
-  addEvent: (event: Partial<RecordedEvent>) => Promise<void>;
-  updateEvent: (eventId: string, updates: Partial<RecordedEvent>) => Promise<void>;
-  deleteEvent: (eventId: string) => Promise<void>;
-  reorderEvents: (eventIds: string[]) => Promise<void>;
+  addEvent: (event: RecordedEvent) => void;
+  updateEvent: (eventId: string, updates: Partial<RecordedEvent>) => void;
+  deleteEvent: (eventId: string) => void;
+  reorderEvents: (eventIds: string[]) => void;
   selectEvent: (event: RecordedEvent | null) => void;
   setInspectedElement: (element: ElementInfo | null) => void;
   generateCode: (options: CodeGenerationOptions) => Promise<void>;
-  getEvents: () => Promise<void>;
   resetState: () => void;
-  // New methods for advanced features
+  reconnectWebSocket: () => Promise<void>;
+  checkRecorderStatus: () => Promise<void>;
+  // Add assertion methods
+  addAssertion: (eventId: string, assertion: AssertionConfig) => Promise<void>;
+  updateAssertion: (eventId: string, assertionId: string, updates: Partial<AssertionConfig>) => Promise<void>;
+  deleteAssertion: (eventId: string, assertionId: string) => Promise<void>;
+  // Add condition methods
   addCondition: (parentEventId: string, condition: Condition) => Promise<void>;
   updateCondition: (eventId: string, condition: Condition) => Promise<void>;
-  addLoop: (parentEventId: string, loop: Loop) => Promise<void>;
-  updateLoop: (eventId: string, loop: Loop) => Promise<void>;
+  // Add data source methods
   addDataSource: (dataSource: DataSource) => Promise<void>;
   updateDataSource: (dataSourceId: string, updates: Partial<DataSource>) => Promise<void>;
   deleteDataSource: (dataSourceId: string) => Promise<void>;
-  addVariableBinding: (parentEventId: string, variableBinding: VariableBinding) => Promise<void>;
-  updateVariableBinding: (eventId: string, variableBinding: VariableBinding) => Promise<void>;
-  addAssertion: (parentEventId: string, assertion: AssertionConfig) => Promise<void>;
-  updateAssertion: (eventId: string, assertionId: string, updates: Partial<AssertionConfig>) => Promise<void>;
-  deleteAssertion: (eventId: string, assertionId: string) => Promise<void>;
+  // Add loop methods
+  addLoop: (parentEventId: string, loop: Loop) => Promise<void>;
+  updateLoop: (eventId: string, loop: Loop) => Promise<void>;
+  // Add step group methods
   createStepGroup: (name: string, eventIds: string[]) => Promise<void>;
   updateStepGroup: (groupId: string, updates: Partial<StepGroup>) => Promise<void>;
   deleteStepGroup: (groupId: string) => Promise<void>;
+  // Add variable binding methods
+  addVariableBinding: (parentEventId: string, binding: VariableBinding) => Promise<void>;
+  updateVariableBinding: (eventId: string, binding: VariableBinding) => Promise<void>;
 }
 
 // Create context
@@ -547,59 +275,61 @@ interface RecorderProviderProps {
 // Provider component
 export const RecorderProvider: React.FC<RecorderProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(recorderReducer, initialState);
-  const [websocketStatus, setWebsocketStatus] = React.useState<ConnectionStatus>(
-    wsService.getStatus()
-  );
-
-  // Reset error after 5 seconds
+  
+  // Setup WebSocket connection status listener
   useEffect(() => {
-    if (state.error) {
-      const timer = setTimeout(() => {
-        dispatch({ type: 'SET_ERROR', payload: { error: null } });
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [state.error]);
-
-  // WebSocket subscription for real-time events
+    const unsubscribe = wsService.subscribeToStatus((status) => {
+      dispatch({ type: 'SET_CONNECTION_STATUS', payload: { connectionStatus: status } });
+      
+      // If connection is lost during recording, attempt to reconnect
+      if (status === ConnectionStatus.DISCONNECTED && 
+          state.status === RecordingStatus.RECORDING && 
+          state.session?.id) {
+        console.debug('WebSocket disconnected during active recording, attempting to reconnect');
+        wsService.connect(state.session.id)
+          .catch(err => console.error('Failed to reconnect WebSocket:', err));
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [state.status, state.session?.id]);
+  
+  // Listen for recorded events from WebSocket
   useEffect(() => {
-    const statusUnsubscribe = wsService.subscribeToStatus(setWebsocketStatus);
-    
-    const eventUnsubscribe = wsService.subscribe<RecordedEvent>(
-      WsMessageType.EVENT_RECORDED, 
-      (payload) => {
-        dispatch({ type: 'ADD_EVENT', payload: { event: payload } });
+    const unsubscribe = wsService.subscribe(WsMessageType.EVENT_RECORDED, (eventData: RecordedEvent) => {
+      console.debug('Received event from WebSocket:', eventData);
+      if (eventData && eventData.id) {
+        dispatch({ type: 'ADD_EVENT', payload: { event: eventData } });
+      } else {
+        console.warn('Received invalid event data from WebSocket:', eventData);
       }
-    );
+    });
     
-    const sessionStatusUnsubscribe = wsService.subscribe<RecordingSession>(
-      WsMessageType.SESSION_STATUS, 
-      (payload) => {
-        dispatch({ type: 'SET_SESSION', payload: { session: payload } });
+    return () => unsubscribe();
+  }, []);
+  
+  // Listen for session status updates
+  useEffect(() => {
+    const unsubscribe = wsService.subscribe(WsMessageType.SESSION_STATUS, (statusData: { status: RecordingStatus }) => {
+      console.debug('Received status update from WebSocket:', statusData);
+      if (statusData && statusData.status) {
+        dispatch({ type: 'UPDATE_STATUS', payload: { status: statusData.status } });
       }
-    );
+    });
     
-    const elementHighlightUnsubscribe = wsService.subscribe<ElementInfo>(
-      WsMessageType.ELEMENT_HIGHLIGHTED, 
-      (payload) => {
-        dispatch({ type: 'SET_INSPECTED_ELEMENT', payload: { element: payload } });
+    return () => unsubscribe();
+  }, []);
+  
+  // Listen for errors
+  useEffect(() => {
+    const unsubscribe = wsService.subscribe(WsMessageType.ERROR, (errorData: { message: string }) => {
+      console.error('Received error from WebSocket:', errorData);
+      if (errorData && errorData.message) {
+        dispatch({ type: 'SET_ERROR', payload: { error: errorData.message } });
       }
-    );
+    });
     
-    const errorUnsubscribe = wsService.subscribe<string>(
-      WsMessageType.ERROR, 
-      (payload) => {
-        dispatch({ type: 'SET_ERROR', payload: { error: payload } });
-      }
-    );
-    
-    return () => {
-      statusUnsubscribe();
-      eventUnsubscribe();
-      sessionStatusUnsubscribe();
-      elementHighlightUnsubscribe();
-      errorUnsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   // Start recording session
@@ -617,10 +347,12 @@ export const RecorderProvider: React.FC<RecorderProviderProps> = ({ children }) 
           console.debug('WebSocket connected for session', session.id);
         } catch (err) {
           console.error('Failed to connect to WebSocket:', err);
+          // Continue without WebSocket for now, we'll reconnect when needed
         }
       }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to start recording session' } });
+      throw error; // Rethrow to handle in UI
     }
   }, []);
 
@@ -641,6 +373,7 @@ export const RecorderProvider: React.FC<RecorderProviderProps> = ({ children }) 
       wsService.disconnect();
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to stop recording session' } });
+      throw error; // Rethrow to handle in UI
     }
   }, [state.session?.id]);
 
@@ -658,6 +391,7 @@ export const RecorderProvider: React.FC<RecorderProviderProps> = ({ children }) 
       dispatch({ type: 'SET_SESSION', payload: { session } });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to pause recording session' } });
+      throw error;
     }
   }, [state.session?.id]);
 
@@ -675,467 +409,119 @@ export const RecorderProvider: React.FC<RecorderProviderProps> = ({ children }) 
       dispatch({ type: 'SET_SESSION', payload: { session } });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to resume recording session' } });
+      throw error;
     }
   }, [state.session?.id]);
-
-  // Add manual event
-  const addEvent = useCallback(async (event: Partial<RecordedEvent>): Promise<void> => {
-    if (!state.session?.id) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'No active recording session' } });
-      return;
-    }
-    
-    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-    
-    try {
-      const newEvent = await recorderService.addEvent(event);
-      dispatch({ type: 'ADD_EVENT', payload: { event: newEvent } });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to add event' } });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    }
-  }, [state.session?.id]);
-
-  // Update event
-  const updateEvent = useCallback(async (eventId: string, updates: Partial<RecordedEvent>): Promise<void> => {
-    if (!state.session?.id) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'No active recording session' } });
-      return;
-    }
-    
-    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-    
-    try {
-      const updatedEvent = await recorderService.updateEvent(eventId, updates);
-      
-      dispatch({ 
-        type: 'UPDATE_EVENT', 
-        payload: { eventId, updates: updatedEvent }
-      });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to update event' } });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    }
-  }, [state.session?.id]);
-
-  // Delete event
-  const deleteEvent = useCallback(async (eventId: string): Promise<void> => {
-    if (!state.session?.id) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'No active recording session' } });
-      return;
-    }
-    
-    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-    
-    try {
-      await recorderService.deleteEvent(eventId);
-      dispatch({ type: 'DELETE_EVENT', payload: { eventId } });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to delete event' } });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    }
-  }, [state.session?.id]);
-
-  // Reorder events
-  const reorderEvents = useCallback(async (eventIds: string[]): Promise<void> => {
-    if (!state.session?.id) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'No active recording session' } });
-      return;
-    }
-    
-    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-    
-    try {
-      await recorderService.reorderEvents(state.session.id, eventIds);
-      dispatch({ type: 'REORDER_EVENTS', payload: { eventIds } });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to reorder events' } });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    }
-  }, [state.session?.id]);
-
-  // Select event
+  
+  // Add recording event
+  const addEvent = useCallback((event: RecordedEvent): void => {
+    dispatch({ type: 'ADD_EVENT', payload: { event } });
+  }, []);
+  
+  // Update recording event
+  const updateEvent = useCallback((eventId: string, updates: Partial<RecordedEvent>): void => {
+    dispatch({ type: 'UPDATE_EVENT', payload: { eventId, updates } });
+  }, []);
+  
+  // Delete recording event
+  const deleteEvent = useCallback((eventId: string): void => {
+    dispatch({ type: 'DELETE_EVENT', payload: { eventId } });
+  }, []);
+  
+  // Reorder recording events
+  const reorderEvents = useCallback((eventIds: string[]): void => {
+    dispatch({ type: 'REORDER_EVENTS', payload: { eventIds } });
+  }, []);
+  
+  // Select recording event
   const selectEvent = useCallback((event: RecordedEvent | null): void => {
     dispatch({ type: 'SELECT_EVENT', payload: { event } });
   }, []);
-
+  
   // Set inspected element
   const setInspectedElement = useCallback((element: ElementInfo | null): void => {
     dispatch({ type: 'SET_INSPECTED_ELEMENT', payload: { element } });
   }, []);
-
-  // Generate code
+  
+  // Generate code from recorded events
   const generateCode = useCallback(async (options: CodeGenerationOptions): Promise<void> => {
-    if (!state.session?.id) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'No recording session data available for code generation' } });
+    if (!state.session?.id || state.events.length === 0) {
+      dispatch({ type: 'SET_ERROR', payload: { error: 'No events to generate code from' } });
       return;
     }
     
     dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
     
     try {
-      const generatedCode = await recorderService.generateCode(state.session.id, options);
-      dispatch({ 
-        type: 'SET_GENERATED_CODE', 
-        payload: { code: generatedCode.testCode } 
-      });
+      const codeResult = await recorderService.generateCode(state.session.id, options);
+      // If codeResult is a GeneratedCode object, extract the testCode property
+      const code = typeof codeResult === 'string' ? codeResult : codeResult.testCode;
+      dispatch({ type: 'SET_GENERATED_CODE', payload: { code } });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to generate code' } });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
+      throw error;
     }
-  }, [state.session?.id]);
-
-  // Fetch events for the current session
-  const getEvents = useCallback(async (): Promise<void> => {
+  }, [state.session?.id, state.events]);
+  
+  // Reset state
+  const resetState = useCallback((): void => {
+    wsService.disconnect();
+    dispatch({ type: 'RESET_STATE' });
+  }, []);
+  
+  // Reconnect WebSocket
+  const reconnectWebSocket = useCallback(async (): Promise<void> => {
     if (!state.session?.id) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'No active recording session' } });
+      console.warn('Cannot reconnect WebSocket: No active session');
       return;
     }
     
-    dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-    
     try {
-      const events = await recorderService.getEvents(state.session.id);
-      dispatch({ type: 'SET_EVENTS', payload: { events } });
+      await wsService.connect(state.session.id);
+      console.debug('WebSocket reconnected for session', state.session.id);
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to fetch events' } });
+      console.error('Failed to reconnect WebSocket:', error);
+      dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to reconnect to recording session' } });
+      throw error;
     }
   }, [state.session?.id]);
-
-  // Reset state to initial values
-  const resetState = useCallback((): void => {
-    dispatch({ type: 'RESET_STATE' });
-  }, []);
-
-  // New methods for advanced features
-  const addCondition = useCallback(async (parentEventId: string, condition: Condition) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Create condition in backend
-      const response = await recorderService.addCondition(parentEventId, condition);
-      
-      dispatch({ 
-        type: 'ADD_CONDITION', 
-        payload: { parentEventId, condition: response || condition } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to add condition') } 
-      });
-    }
-  }, []);
   
-  const updateCondition = useCallback(async (eventId: string, condition: Condition) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Update condition in backend
-      const response = await recorderService.updateCondition(eventId, condition);
-      
-      dispatch({ 
-        type: 'UPDATE_CONDITION', 
-        payload: { eventId, condition: response || condition } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to update condition') } 
-      });
+  // Check recorder status
+  const checkRecorderStatus = useCallback(async (): Promise<void> => {
+    if (!state.session?.id) {
+      return;
     }
-  }, []);
-  
-  const addLoop = useCallback(async (parentEventId: string, loop: Loop) => {
+    
     try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
+      const session = await recorderService.getSession(state.session.id);
+      dispatch({ type: 'SET_SESSION', payload: { session } });
       
-      // Create loop in backend
-      const response = await recorderService.addLoop(parentEventId, loop);
-      
-      dispatch({ 
-        type: 'ADD_LOOP', 
-        payload: { parentEventId, loop: response || loop } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
+      // If recording but WebSocket disconnected, reconnect
+      if (session.status === RecordingStatus.RECORDING && 
+          state.connectionStatus !== ConnectionStatus.CONNECTED) {
+        await reconnectWebSocket();
+      }
     } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to add loop') } 
-      });
+      console.error('Failed to check recorder status:', error);
     }
-  }, []);
+  }, [state.session?.id, state.connectionStatus, reconnectWebSocket]);
   
-  const updateLoop = useCallback(async (eventId: string, loop: Loop) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Update loop in backend
-      const response = await recorderService.updateLoop(eventId, loop);
-      
-      dispatch({ 
-        type: 'UPDATE_LOOP', 
-        payload: { eventId, loop: response || loop } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to update loop') } 
-      });
+  // Periodic health check for long recording sessions
+  useEffect(() => {
+    if (state.status !== RecordingStatus.RECORDING || !state.session?.id) {
+      return;
     }
-  }, []);
+    
+    const healthCheckInterval = setInterval(() => {
+      checkRecorderStatus().catch(err => 
+        console.error('Health check failed:', err)
+      );
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(healthCheckInterval);
+  }, [state.status, state.session?.id, checkRecorderStatus]);
   
-  const addDataSource = useCallback(async (dataSource: DataSource) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Create data source in backend
-      const response = await recorderService.addDataSource(dataSource);
-      
-      dispatch({ 
-        type: 'ADD_DATA_SOURCE', 
-        payload: { dataSource: response || dataSource } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to add data source') } 
-      });
-    }
-  }, []);
-  
-  const updateDataSource = useCallback(async (dataSourceId: string, updates: Partial<DataSource>) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Update data source in backend
-      const response = await recorderService.updateDataSource(dataSourceId, updates);
-      
-      dispatch({ 
-        type: 'UPDATE_DATA_SOURCE', 
-        payload: { dataSourceId, updates: response || updates } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to update data source') } 
-      });
-    }
-  }, []);
-  
-  const deleteDataSource = useCallback(async (dataSourceId: string) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Delete data source in backend
-      await recorderService.deleteDataSource(dataSourceId);
-      
-      dispatch({ type: 'DELETE_DATA_SOURCE', payload: { dataSourceId } });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to delete data source') } 
-      });
-    }
-  }, []);
-  
-  const addVariableBinding = useCallback(async (parentEventId: string, variableBinding: VariableBinding) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Create variable binding in backend
-      const response = await recorderService.addVariableBinding(parentEventId, variableBinding);
-      
-      dispatch({ 
-        type: 'ADD_VARIABLE_BINDING', 
-        payload: { parentEventId, variableBinding: response || variableBinding } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to add variable binding') } 
-      });
-    }
-  }, []);
-  
-  const updateVariableBinding = useCallback(async (eventId: string, variableBinding: VariableBinding) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Update variable binding in backend
-      const response = await recorderService.updateVariableBinding(eventId, variableBinding);
-      
-      dispatch({ 
-        type: 'UPDATE_VARIABLE_BINDING', 
-        payload: { eventId, variableBinding: response || variableBinding } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to update variable binding') } 
-      });
-    }
-  }, []);
-  
-  const addAssertion = useCallback(async (parentEventId: string, assertion: AssertionConfig) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Create assertion in backend
-      const response = await recorderService.addAssertion(parentEventId, assertion);
-      
-      dispatch({ 
-        type: 'ADD_ASSERTION', 
-        payload: { parentEventId, assertion: response || assertion } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to add assertion') } 
-      });
-    }
-  }, []);
-  
-  const updateAssertion = useCallback(async (
-    eventId: string, 
-    assertionId: string, 
-    updates: Partial<AssertionConfig>
-  ) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Update assertion in backend
-      const response = await recorderService.updateAssertion(eventId, assertionId, updates);
-      
-      dispatch({ 
-        type: 'UPDATE_ASSERTION', 
-        payload: { 
-          eventId, 
-          assertionId, 
-          updates: response || updates 
-        } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to update assertion') } 
-      });
-    }
-  }, []);
-  
-  const deleteAssertion = useCallback(async (eventId: string, assertionId: string) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Delete assertion in backend
-      await recorderService.deleteAssertion(eventId, assertionId);
-      
-      dispatch({ 
-        type: 'DELETE_ASSERTION', 
-        payload: { eventId, assertionId } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to delete assertion') } 
-      });
-    }
-  }, []);
-  
-  const createStepGroup = useCallback(async (name: string, eventIds: string[]) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Create step group in backend
-      const response = await recorderService.createStepGroup(name, eventIds);
-      
-      dispatch({ 
-        type: 'CREATE_STEP_GROUP', 
-        payload: { 
-          name, 
-          eventIds,
-          ...(response ? { response } : {})
-        } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to create step group') } 
-      });
-    }
-  }, []);
-  
-  const updateStepGroup = useCallback(async (groupId: string, updates: Partial<StepGroup>) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Update step group in backend
-      const response = await recorderService.updateStepGroup(groupId, updates);
-      
-      dispatch({ 
-        type: 'UPDATE_STEP_GROUP', 
-        payload: { groupId, updates: response || updates } 
-      });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to update step group') } 
-      });
-    }
-  }, []);
-  
-  const deleteStepGroup = useCallback(async (groupId: string) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: true } });
-      
-      // Delete step group in backend
-      await recorderService.deleteStepGroup(groupId);
-      
-      dispatch({ type: 'DELETE_STEP_GROUP', payload: { groupId } });
-      
-      dispatch({ type: 'SET_LOADING', payload: { isLoading: false } });
-    } catch (error) {
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: { error: formatError(error, 'Failed to delete step group') } 
-      });
-    }
-  }, []);
-  
-  // Value object to be provided by context
-  const value: RecorderContextValue = {
+  const contextValue: RecorderContextValue = {
     state,
     startRecording,
     stopRecording,
@@ -1148,28 +534,214 @@ export const RecorderProvider: React.FC<RecorderProviderProps> = ({ children }) 
     selectEvent,
     setInspectedElement,
     generateCode,
-    getEvents,
     resetState,
-    // New methods
-    addCondition,
-    updateCondition,
-    addLoop,
-    updateLoop,
-    addDataSource,
-    updateDataSource,
-    deleteDataSource,
-    addVariableBinding,
-    updateVariableBinding,
-    addAssertion,
-    updateAssertion,
-    deleteAssertion,
-    createStepGroup,
-    updateStepGroup,
-    deleteStepGroup
+    reconnectWebSocket,
+    checkRecorderStatus,
+    // Add assertion methods
+    addAssertion: async (eventId: string, assertion: AssertionConfig): Promise<void> => {
+      try {
+        await recorderService.addAssertion(eventId, assertion);
+        // Reload events after adding assertion
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to add assertion' } });
+        throw error;
+      }
+    },
+    updateAssertion: async (eventId: string, assertionId: string, updates: Partial<AssertionConfig>): Promise<void> => {
+      try {
+        await recorderService.updateAssertion(eventId, assertionId, updates);
+        // Reload events after updating assertion
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to update assertion' } });
+        throw error;
+      }
+    },
+    deleteAssertion: async (eventId: string, assertionId: string): Promise<void> => {
+      try {
+        await recorderService.deleteAssertion(eventId, assertionId);
+        // Reload events after deleting assertion
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to delete assertion' } });
+        throw error;
+      }
+    },
+    // Add condition methods
+    addCondition: async (parentEventId: string, condition: Condition): Promise<void> => {
+      try {
+        await recorderService.addCondition(parentEventId, condition);
+        // Reload events after adding condition
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to add condition' } });
+        throw error;
+      }
+    },
+    updateCondition: async (eventId: string, condition: Condition): Promise<void> => {
+      try {
+        await recorderService.updateCondition(eventId, condition);
+        // Reload events after updating condition
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to update condition' } });
+        throw error;
+      }
+    },
+    // Add data source methods
+    addDataSource: async (dataSource: DataSource): Promise<void> => {
+      try {
+        await recorderService.addDataSource(dataSource);
+        // Reload events after adding data source
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to add data source' } });
+        throw error;
+      }
+    },
+    updateDataSource: async (dataSourceId: string, updates: Partial<DataSource>): Promise<void> => {
+      try {
+        await recorderService.updateDataSource(dataSourceId, updates);
+        // Reload events after updating data source
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to update data source' } });
+        throw error;
+      }
+    },
+    deleteDataSource: async (dataSourceId: string): Promise<void> => {
+      try {
+        await recorderService.deleteDataSource(dataSourceId);
+        // Reload events after deleting data source
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to delete data source' } });
+        throw error;
+      }
+    },
+    // Add loop methods
+    addLoop: async (parentEventId: string, loop: Loop): Promise<void> => {
+      try {
+        await recorderService.addLoop(parentEventId, loop);
+        // Reload events after adding loop
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to add loop' } });
+        throw error;
+      }
+    },
+    updateLoop: async (eventId: string, loop: Loop): Promise<void> => {
+      try {
+        await recorderService.updateLoop(eventId, loop);
+        // Reload events after updating loop
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to update loop' } });
+        throw error;
+      }
+    },
+    // Add step group methods
+    createStepGroup: async (name: string, eventIds: string[]): Promise<void> => {
+      try {
+        await recorderService.createStepGroup(name, eventIds);
+        // Reload events after creating step group
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to create step group' } });
+        throw error;
+      }
+    },
+    updateStepGroup: async (groupId: string, updates: Partial<StepGroup>): Promise<void> => {
+      try {
+        await recorderService.updateStepGroup(groupId, updates);
+        // Reload events after updating step group
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to update step group' } });
+        throw error;
+      }
+    },
+    deleteStepGroup: async (groupId: string): Promise<void> => {
+      try {
+        await recorderService.deleteStepGroup(groupId);
+        // Reload events after deleting step group
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to delete step group' } });
+        throw error;
+      }
+    },
+    // Add variable binding methods
+    addVariableBinding: async (parentEventId: string, binding: VariableBinding): Promise<void> => {
+      try {
+        await recorderService.addVariableBinding(parentEventId, binding);
+        // Reload events after adding variable binding
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to add variable binding' } });
+        throw error;
+      }
+    },
+    updateVariableBinding: async (eventId: string, binding: VariableBinding): Promise<void> => {
+      try {
+        await recorderService.updateVariableBinding(eventId, binding);
+        // Reload events after updating variable binding
+        if (state.session?.id) {
+          const session = await recorderService.getSession(state.session.id);
+          dispatch({ type: 'SET_SESSION', payload: { session } });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: { error: 'Failed to update variable binding' } });
+        throw error;
+      }
+    }
   };
-
+  
   return (
-    <RecorderContext.Provider value={value}>
+    <RecorderContext.Provider value={contextValue}>
       {children}
     </RecorderContext.Provider>
   );

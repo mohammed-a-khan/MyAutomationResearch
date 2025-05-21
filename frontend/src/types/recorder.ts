@@ -2,6 +2,9 @@
  * Types for the Test Recorder module
  */
 
+// Import types from services
+import { ConnectionStatus } from '../services/wsService';
+
 /**
  * Type of event recorded
  */
@@ -189,6 +192,7 @@ export interface RecorderContextState {
   generatedCode: string | null;
   error: string | null;
   isLoading: boolean;
+  connectionStatus: ConnectionStatus;
 }
 
 /**

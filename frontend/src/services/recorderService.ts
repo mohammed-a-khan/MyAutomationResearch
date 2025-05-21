@@ -1,11 +1,11 @@
 /**
- * Service for Test Recorder API interactions
+ * Extended recorderService with Recordings List API
  */
-import { 
-  RecordingOptions, 
-  RecordingSession, 
+import {
+  RecordingOptions,
+  RecordingSession,
   RecordedEvent,
-  CodeGenerationOptions, 
+  CodeGenerationOptions,
   GeneratedCode,
   Condition,
   Loop,
@@ -14,7 +14,7 @@ import {
   AssertionConfig,
   StepGroup
 } from '../types/recorder';
-import { apiClient } from '../utils/apiClient';
+import axios from 'axios';
 import { logError } from '../utils/errorHandling';
 
 /**
@@ -35,11 +35,11 @@ class RecorderService {
         framework: options.framework,
         url: options.targetUrl
       };
-      
+
       // Debug logging
       console.log('Sending recorder start request:', requestData);
-      
-      const response = await apiClient.post('/api/recorder/start', requestData);
+
+      const response = await axios.post('/api/recorder/start', requestData);
       console.log('Recorder start response:', response.data);
       return response.data;
     } catch (error) {
@@ -55,7 +55,7 @@ class RecorderService {
    */
   async stopRecording(sessionId: string): Promise<RecordingSession> {
     try {
-      const response = await apiClient.post(`/api/recorder/stop`, { sessionId });
+      const response = await axios.post(`/api/recorder/stop`, { sessionId });
       return response.data;
     } catch (error) {
       throw new Error('Failed to stop recording session');
@@ -69,7 +69,7 @@ class RecorderService {
    */
   async getEvents(sessionId: string): Promise<RecordedEvent[]> {
     try {
-      const response = await apiClient.get(`/api/recorder/events`, {
+      const response = await axios.get(`/api/recorder/events`, {
         params: { sessionId }
       });
       return response.data;
@@ -85,7 +85,7 @@ class RecorderService {
    */
   async addEvent(event: Partial<RecordedEvent>): Promise<RecordedEvent> {
     try {
-      const response = await apiClient.post('/api/recorder/event', event);
+      const response = await axios.post('/api/recorder/event', event);
       return response.data;
     } catch (error) {
       throw new Error('Failed to add event');
@@ -99,7 +99,7 @@ class RecorderService {
    */
   async deleteEvent(eventId: string): Promise<boolean> {
     try {
-      await apiClient.delete(`/api/recorder/event/${eventId}`);
+      await axios.delete(`/api/recorder/event/${eventId}`);
       return true;
     } catch (error) {
       throw new Error('Failed to delete event');
@@ -114,7 +114,7 @@ class RecorderService {
    */
   async reorderEvents(sessionId: string, eventIds: string[]): Promise<RecordedEvent[]> {
     try {
-      const response = await apiClient.put('/api/recorder/events/reorder', {
+      const response = await axios.put('/api/recorder/events/reorder', {
         sessionId,
         eventIds
       });
@@ -131,12 +131,12 @@ class RecorderService {
    * @returns Generated test code
    */
   async generateCode(
-    sessionId: string, 
-    options: CodeGenerationOptions
+      sessionId: string,
+      options: CodeGenerationOptions
   ): Promise<GeneratedCode> {
     try {
-      const response = await apiClient.get('/api/recorder/code', {
-        params: { 
+      const response = await axios.get('/api/recorder/code', {
+        params: {
           sessionId,
           ...options
         }
@@ -154,11 +154,11 @@ class RecorderService {
    * @returns Updated event
    */
   async updateEvent(
-    eventId: string, 
-    updates: Partial<RecordedEvent>
+      eventId: string,
+      updates: Partial<RecordedEvent>
   ): Promise<RecordedEvent> {
     try {
-      const response = await apiClient.put(`/api/recorder/event/${eventId}`, updates);
+      const response = await axios.put(`/api/recorder/event/${eventId}`, updates);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update event');
@@ -172,7 +172,7 @@ class RecorderService {
    */
   async getSessionStatus(sessionId: string): Promise<RecordingSession> {
     try {
-      const response = await apiClient.get(`/api/recorder/session/${sessionId}`);
+      const response = await axios.get(`/api/recorder/session/${sessionId}`);
       return response.data;
     } catch (error) {
       throw new Error('Failed to get session status');
@@ -186,7 +186,7 @@ class RecorderService {
    */
   async pauseRecording(sessionId: string): Promise<RecordingSession> {
     try {
-      const response = await apiClient.post(`/api/recorder/pause`, { sessionId });
+      const response = await axios.post(`/api/recorder/pause`, { sessionId });
       return response.data;
     } catch (error) {
       throw new Error('Failed to pause recording');
@@ -200,10 +200,60 @@ class RecorderService {
    */
   async resumeRecording(sessionId: string): Promise<RecordingSession> {
     try {
-      const response = await apiClient.post(`/api/recorder/resume`, { sessionId });
+      const response = await axios.post(`/api/recorder/resume`, { sessionId });
       return response.data;
     } catch (error) {
       throw new Error('Failed to resume recording');
+    }
+  }
+
+  /**
+   * Get all recording sessions
+   * @returns List of all recording sessions
+   */
+  async getAllRecordings(): Promise<RecordingSession[]> {
+    try {
+      const response = await axios.get('/api/recorder/recordings');
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to fetch recordings');
+    }
+  }
+
+  /**
+   * Delete a recording session
+   * @param recordingId ID of the recording to delete
+   * @returns Success status
+   */
+  async deleteRecording(recordingId: string): Promise<boolean> {
+    try {
+      await axios.delete(`/api/recorder/recordings/${recordingId}`);
+      return true;
+    } catch (error) {
+      throw new Error('Failed to delete recording');
+    }
+  }
+
+  /**
+   * Generate code from a recording with specific options
+   * @param recordingId ID of the recording
+   * @param options Code generation options
+   * @returns Generated code
+   */
+  async generateCodeWithOptions(
+      recordingId: string,
+      options: {
+        framework: string;
+        language: string;
+        includeComments?: boolean;
+        includeAssertions?: boolean;
+      }
+  ): Promise<GeneratedCode> {
+    try {
+      const response = await axios.post(`/api/recorder/generate-code/${recordingId}`, options);
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to generate code');
     }
   }
 
@@ -215,7 +265,7 @@ class RecorderService {
    */
   async addCondition(parentEventId: string, condition: Condition): Promise<Condition> {
     try {
-      const response = await apiClient.post('/api/recorder/condition', {
+      const response = await axios.post('/api/recorder/condition', {
         parentEventId,
         condition
       });
@@ -233,7 +283,7 @@ class RecorderService {
    */
   async updateCondition(eventId: string, condition: Condition): Promise<Condition> {
     try {
-      const response = await apiClient.put(`/api/recorder/event/${eventId}/condition`, condition);
+      const response = await axios.put(`/api/recorder/event/${eventId}/condition`, condition);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update condition');
@@ -248,7 +298,7 @@ class RecorderService {
    */
   async addLoop(parentEventId: string, loop: Loop): Promise<Loop> {
     try {
-      const response = await apiClient.post('/api/recorder/loop', {
+      const response = await axios.post('/api/recorder/loop', {
         parentEventId,
         loop
       });
@@ -266,7 +316,7 @@ class RecorderService {
    */
   async updateLoop(eventId: string, loop: Loop): Promise<Loop> {
     try {
-      const response = await apiClient.put(`/api/recorder/event/${eventId}/loop`, loop);
+      const response = await axios.put(`/api/recorder/event/${eventId}/loop`, loop);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update loop');
@@ -280,7 +330,7 @@ class RecorderService {
    */
   async addDataSource(dataSource: DataSource): Promise<DataSource> {
     try {
-      const response = await apiClient.post('/api/recorder/datasource', dataSource);
+      const response = await axios.post('/api/recorder/datasource', dataSource);
       return response.data;
     } catch (error) {
       throw new Error('Failed to add data source');
@@ -295,7 +345,7 @@ class RecorderService {
    */
   async updateDataSource(dataSourceId: string, updates: Partial<DataSource>): Promise<DataSource> {
     try {
-      const response = await apiClient.put(`/api/recorder/datasource/${dataSourceId}`, updates);
+      const response = await axios.put(`/api/recorder/datasource/${dataSourceId}`, updates);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update data source');
@@ -309,7 +359,7 @@ class RecorderService {
    */
   async deleteDataSource(dataSourceId: string): Promise<boolean> {
     try {
-      await apiClient.delete(`/api/recorder/datasource/${dataSourceId}`);
+      await axios.delete(`/api/recorder/datasource/${dataSourceId}`);
       return true;
     } catch (error) {
       throw new Error('Failed to delete data source');
@@ -324,7 +374,7 @@ class RecorderService {
    */
   async addVariableBinding(parentEventId: string, variableBinding: VariableBinding): Promise<VariableBinding> {
     try {
-      const response = await apiClient.post('/api/recorder/variable', {
+      const response = await axios.post('/api/recorder/variable', {
         parentEventId,
         variableBinding
       });
@@ -342,7 +392,7 @@ class RecorderService {
    */
   async updateVariableBinding(eventId: string, variableBinding: VariableBinding): Promise<VariableBinding> {
     try {
-      const response = await apiClient.put(`/api/recorder/event/${eventId}/variable`, variableBinding);
+      const response = await axios.put(`/api/recorder/event/${eventId}/variable`, variableBinding);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update variable binding');
@@ -357,7 +407,7 @@ class RecorderService {
    */
   async addAssertion(parentEventId: string, assertion: AssertionConfig): Promise<AssertionConfig> {
     try {
-      const response = await apiClient.post('/api/recorder/assertion', {
+      const response = await axios.post('/api/recorder/assertion', {
         parentEventId,
         assertion
       });
@@ -375,12 +425,12 @@ class RecorderService {
    * @returns The updated assertion
    */
   async updateAssertion(
-    eventId: string,
-    assertionId: string,
-    updates: Partial<AssertionConfig>
+      eventId: string,
+      assertionId: string,
+      updates: Partial<AssertionConfig>
   ): Promise<AssertionConfig> {
     try {
-      const response = await apiClient.put(`/api/recorder/event/${eventId}/assertion/${assertionId}`, updates);
+      const response = await axios.put(`/api/recorder/event/${eventId}/assertion/${assertionId}`, updates);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update assertion');
@@ -395,7 +445,7 @@ class RecorderService {
    */
   async deleteAssertion(eventId: string, assertionId: string): Promise<boolean> {
     try {
-      await apiClient.delete(`/api/recorder/event/${eventId}/assertion/${assertionId}`);
+      await axios.delete(`/api/recorder/event/${eventId}/assertion/${assertionId}`);
       return true;
     } catch (error) {
       throw new Error('Failed to delete assertion');
@@ -410,7 +460,7 @@ class RecorderService {
    */
   async createStepGroup(name: string, eventIds: string[]): Promise<StepGroup> {
     try {
-      const response = await apiClient.post('/api/recorder/group', {
+      const response = await axios.post('/api/recorder/group', {
         name,
         eventIds
       });
@@ -428,7 +478,7 @@ class RecorderService {
    */
   async updateStepGroup(groupId: string, updates: Partial<StepGroup>): Promise<StepGroup> {
     try {
-      const response = await apiClient.put(`/api/recorder/group/${groupId}`, updates);
+      const response = await axios.put(`/api/recorder/group/${groupId}`, updates);
       return response.data;
     } catch (error) {
       throw new Error('Failed to update step group');
@@ -442,12 +492,26 @@ class RecorderService {
    */
   async deleteStepGroup(groupId: string): Promise<boolean> {
     try {
-      await apiClient.delete(`/api/recorder/group/${groupId}`);
+      await axios.delete(`/api/recorder/group/${groupId}`);
       return true;
     } catch (error) {
       throw new Error('Failed to delete step group');
     }
   }
+
+  /**
+   * Get details of a recording session
+   * @param sessionId ID of the recording session
+   * @returns The recording session details
+   */
+  async getSession(sessionId: string): Promise<RecordingSession> {
+    try {
+      const response = await axios.get(`/api/recorder/sessions/${sessionId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to get recording session');
+    }
+  }
 }
 
-export const recorderService = new RecorderService(); 
+export const recorderService = new RecorderService();

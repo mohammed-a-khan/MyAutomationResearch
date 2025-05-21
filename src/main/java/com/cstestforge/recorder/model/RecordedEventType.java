@@ -48,5 +48,7 @@ public enum RecordedEventType {
     DBLCLICK,
     INIT,
     RECORDER_CONTROL,
-    RECORDER_STATUS
-} 
+    RECORDER_STATUS,
+    VERIFY,
+    HEARTBEAT
+}

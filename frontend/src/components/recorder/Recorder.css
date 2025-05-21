@@ -500,57 +500,58 @@
 .connection-status {
   display: flex;
   align-items: center;
-  margin-right: 15px;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin-left: auto;
 }
 
-.connection-indicator {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 5px;
+.status-connected {
+  background-color: rgba(40, 167, 69, 0.15);
+  color: #28a745;
 }
 
-.connection-indicator.connected {
-  background-color: #28a745;
-  box-shadow: 0 0 5px #28a745;
+.status-connecting {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
 }
 
-.connection-indicator.connecting {
-  background-color: #ffc107;
-  box-shadow: 0 0 5px #ffc107;
-  animation: pulse 1s infinite;
+.status-disconnected {
+  background-color: rgba(108, 117, 125, 0.15);
+  color: #6c757d;
 }
 
-.connection-indicator.disconnected {
-  background-color: #dc3545;
-  box-shadow: 0 0 5px #dc3545;
-}
-
-.reconnect-button {
-  background: none;
-  border: none;
+.status-error {
+  background-color: rgba(220, 53, 69, 0.15);
   color: #dc3545;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-  margin-left: 5px;
 }
 
-.reconnect-button:hover {
-  color: #c82333;
+.connection-status i {
+  font-size: 1rem;
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
+.connection-status .reconnect-button {
+  color: inherit;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  margin-left: 8px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+}
+
+.connection-status .reconnect-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Spinner animation for connecting state */
+.spin {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Event editing modal */

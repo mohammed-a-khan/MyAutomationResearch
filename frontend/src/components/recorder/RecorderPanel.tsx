@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecorder } from '../../context/RecorderContext';
 import { useProjects } from '../../context/ProjectContext';
-import { RecordingOptions, RecordingStatus } from '../../types/recorder';
+import {
+  RecordingOptions,
+  RecordingStatus,
+  RecordedEvent,
+  RecordedEventType
+} from '../../types/recorder';
 import wsService, { ConnectionStatus } from '../../services/wsService';
 import './Recorder.css';
 
 // Subcomponents
-import RecorderToolbar from './RecorderToolbar';
+import EnhancedRecorderToolbar from './EnhancedRecorderToolbar';
 import RecorderForm from './RecorderForm';
 import EventList from './EventList';
 import ElementInspector from './ElementInspector';
@@ -33,7 +38,7 @@ interface RecorderPanelProps {
  */
 const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
   // URL params
-  const { projectId: urlProjectId } = useParams<{ projectId: string }>();
+  const { projectId: urlProjectId, recordingId } = useParams<{ projectId: string, recordingId: string }>();
   const navigate = useNavigate();
   const activeProjectId = projectId || urlProjectId;
 
@@ -47,7 +52,8 @@ const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
       inspectedElement,
       generatedCode,
       error,
-      isLoading
+      isLoading,
+      connectionStatus
     },
     startRecording,
     stopRecording,
@@ -56,7 +62,9 @@ const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
     addEvent,
     selectEvent,
     generateCode,
-    resetState
+    resetState,
+    reconnectWebSocket,
+    checkRecorderStatus
   } = useRecorder();
 
   // Get projects context
@@ -72,7 +80,6 @@ const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
   const [selectedProjectId, setSelectedProjectId] = useState<string>(activeProjectId || '');
   const [showAdvancedToolbar, setShowAdvancedToolbar] = useState<boolean>(false);
   const [advancedFeature, setAdvancedFeature] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('disconnected');
 
   // Load projects when component mounts
   useEffect(() => {
@@ -86,33 +93,42 @@ const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
     }
   }, [activeProjectId]);
 
-  // Update connection status when WebSocket status changes
+  // Check recorder status on mount and when needed
   useEffect(() => {
-    const handleConnectionStatus = (status: ConnectionStatus) => {
-      if (status === ConnectionStatus.CONNECTED) {
-        setConnectionStatus('connected');
-      } else if (status === ConnectionStatus.CONNECTING) {
-        setConnectionStatus('connecting');
-      } else {
-        setConnectionStatus('disconnected');
-      }
-    };
-
-    // Subscribe to WebSocket status
-    const unsubscribe = wsService.subscribeToStatus(handleConnectionStatus);
-    
-    // Initial connection attempt if needed
-    if (session) {
-      wsService.connect(session.id)
-        .catch(error => {
-          console.error('Failed to connect to WebSocket:', error);
-        });
+    if (session?.id || recordingId) {
+      checkRecorderStatus().catch(console.error);
     }
-    
-    return () => {
-      unsubscribe();
-    };
-  }, [session]);
+  }, [session?.id, recordingId, checkRecorderStatus]);
+
+  // Add useCallback for reconnection logic
+  const handleReconnect = useCallback(async () => {
+    try {
+      await reconnectWebSocket();
+      // Check recorder status after reconnection
+      if (session?.id) {
+        await checkRecorderStatus();
+      }
+    } catch (error) {
+      console.error('Reconnection failed:', error);
+    }
+  }, [reconnectWebSocket, checkRecorderStatus, session?.id]);
+
+  // Enhanced useEffect for connection monitoring
+  useEffect(() => {
+    if (status === RecordingStatus.RECORDING &&
+        connectionStatus !== ConnectionStatus.CONNECTED &&
+        connectionStatus !== ConnectionStatus.CONNECTING &&
+        session?.id) {
+      console.debug('Detected connection issues during recording, attempting reconnection');
+
+      // Add delay before reconnection attempt to avoid rapid reconnection loops
+      const reconnectTimer = setTimeout(() => {
+        handleReconnect();
+      }, 2000);
+
+      return () => clearTimeout(reconnectTimer);
+    }
+  }, [status, connectionStatus, session?.id, handleReconnect]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -120,6 +136,19 @@ const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
       resetState();
     };
   }, [resetState]);
+
+  // Function to clear error message
+  const clearError = () => {
+    // We can't directly access the dispatch function here,
+    // but we can reset the recorder state partially
+    if (error) {
+      resetState();
+      // If we had a session, we need to reload it
+      if (session?.id) {
+        checkRecorderStatus().catch(console.error);
+      }
+    }
+  };
 
   // Default recording options
   const defaultOptions: RecordingOptions = {
@@ -178,135 +207,225 @@ const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
     setAdvancedFeature(feature);
   };
 
-  // Render based on recording state
-  const renderContent = () => {
-    if (!session && status === RecordingStatus.IDLE) {
+  // Navigate to recordings list
+  const handleViewRecordings = () => {
+    navigate('/recordings');
+  };
+
+  // Render toolbar based on recording status
+  const renderToolbar = () => {
+    // Always render the toolbar when a session exists, regardless of status
+    if (session) {
       return (
-        <div className="recorder-empty-state">
-          <div className="recorder-empty-state-content">
-            <h2>Test Recorder</h2>
-            <p>Record user interactions and generate automated tests</p>
-
-            {/* Project Selection Dropdown */}
-            <div className="project-selector mb-4">
-              <label htmlFor="project-select" className="form-label">Select a Project</label>
-              {projectsLoading ? (
-                <div className="text-center">
-                  <div className="spinner-border spinner-border-sm text-primary" role="status">
-                    <span className="visually-hidden">Loading projects...</span>
-                  </div>
-                  <p className="mt-2">Loading projects...</p>
-                </div>
-              ) : (
-                <Select
-                  id="project-select"
-                  value={selectedProjectId || ''}
-                  onChange={handleProjectChange}
-                  options={[
-                    { value: '', label: '-- Select a Project --' },
-                    ...projects.map(project => ({
-                      value: project.id,
-                      label: project.name
-                    }))
-                  ]}
-                />
-              )}
-
-              {/* Link to create project if none exist */}
-              {!projectsLoading && projects.length === 0 && (
-                <div className="mt-2">
-                  <p>No projects found. <a href="/projects">Create a new project</a> first.</p>
-                </div>
-              )}
-            </div>
-
-            <Button
-              variant="primary"
-              onClick={() => setShowStartDialog(true)}
-              disabled={!selectedProjectId}
-            >
-              Start Recording
-            </Button>
-            {!selectedProjectId && (
-              <p className="text-danger mt-3">
-                Please select a project to enable recording
-              </p>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="recorder-content">
-        <div className="recorder-toolbar-container">
-          <div className="recorder-toolbar-main">
-            <RecorderToolbar
+          <EnhancedRecorderToolbar
               status={status}
               onStop={stopRecording}
               onPause={pauseRecording}
               onResume={resumeRecording}
               onGenerateCode={handleGenerateCode}
+              onViewRecordings={handleViewRecordings}
               disabled={isLoading}
-            />
-            <div className="toolbar-actions">
-              <div className="connection-status">
-                <span 
-                  className={`connection-indicator ${connectionStatus}`} 
-                  title={`WebSocket: ${connectionStatus}`}
-                ></span>
-                {connectionStatus === 'disconnected' && (
-                  <button 
-                    className="reconnect-button" 
-                    onClick={() => session && wsService.connect(session.id)}
-                    title="Reconnect WebSocket"
-                  >
-                    <i className="bi bi-arrow-repeat"></i>
-                  </button>
+              sessionId={session.id}
+          />
+      );
+    }
+
+    // If no session, show start button
+    return (
+        <div className="recorder-start-prompt">
+          <Button
+              variant="primary"
+              size="lg"
+              onClick={() => setShowStartDialog(true)}
+              disabled={isLoading}
+          >
+            <i className="bi bi-record-circle me-2"></i>
+            Start Recording
+          </Button>
+        </div>
+    );
+  };
+
+  // Enhanced connection status indicator with detailed information
+  const renderConnectionStatus = () => {
+    if (!session) return null;
+
+    let statusLabel = '';
+    let statusClass = '';
+    let statusIcon = '';
+
+    switch (connectionStatus) {
+      case ConnectionStatus.CONNECTED:
+        statusLabel = 'Connected';
+        statusClass = 'status-connected';
+        statusIcon = 'bi-wifi';
+        break;
+      case ConnectionStatus.CONNECTING:
+        statusLabel = 'Connecting...';
+        statusClass = 'status-connecting';
+        statusIcon = 'bi-arrow-repeat spin';
+        break;
+      case ConnectionStatus.DISCONNECTED:
+        statusLabel = 'Disconnected';
+        statusClass = 'status-disconnected';
+        statusIcon = 'bi-wifi-off';
+        break;
+      case ConnectionStatus.ERROR:
+        statusLabel = 'Connection Error';
+        statusClass = 'status-error';
+        statusIcon = 'bi-exclamation-triangle';
+        break;
+    }
+
+    return (
+        <div className={`connection-status ${statusClass}`}>
+          <i className={`bi ${statusIcon}`}></i>
+          <span>{statusLabel}</span>
+          {(connectionStatus === ConnectionStatus.DISCONNECTED ||
+              connectionStatus === ConnectionStatus.ERROR) && (
+              <Button
+                  variant="text"
+                  size="sm"
+                  onClick={handleReconnect}
+                  className="reconnect-button"
+              >
+                <i className="bi bi-arrow-repeat me-1"></i>
+                Reconnect
+              </Button>
+          )}
+        </div>
+    );
+  };
+
+  // Render based on recording state
+  const renderContent = () => {
+    if (!session && status === RecordingStatus.IDLE) {
+      return (
+          <div className="recorder-empty-state">
+            <div className="recorder-empty-state-content">
+              <h2>Test Recorder</h2>
+              <p>Record user interactions and generate automated tests</p>
+
+              {/* Project Selection Dropdown */}
+              <div className="project-selector mb-4">
+                <label htmlFor="project-select" className="form-label">Select a Project</label>
+                {projectsLoading ? (
+                    <div className="text-center">
+                      <div className="spinner-border spinner-border-sm text-primary" role="status">
+                        <span className="visually-hidden">Loading projects...</span>
+                      </div>
+                      <p className="mt-2">Loading projects...</p>
+                    </div>
+                ) : (
+                    <Select
+                        id="project-select"
+                        value={selectedProjectId || ''}
+                        onChange={handleProjectChange}
+                        options={[
+                          { value: '', label: '-- Select a Project --' },
+                          ...projects.map(project => ({
+                            value: project.id,
+                            label: project.name
+                          }))
+                        ]}
+                    />
+                )}
+
+                {/* Link to create project if none exist */}
+                {!projectsLoading && projects.length === 0 && (
+                    <div className="mt-2">
+                      <p>No projects found. <a href="/projects">Create a new project</a> first.</p>
+                    </div>
                 )}
               </div>
+
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdvancedToolbar(!showAdvancedToolbar)}
-                className="advanced-toolbar-toggle"
+                  variant="primary"
+                  onClick={() => setShowStartDialog(true)}
+                  disabled={!selectedProjectId}
               >
-                <i className={`bi ${showAdvancedToolbar ? 'bi-chevron-up' : 'bi-chevron-down'} me-1`}></i>
-                {showAdvancedToolbar ? 'Hide Advanced' : 'Show Advanced'}
+                Start Recording
               </Button>
+              {!selectedProjectId && (
+                  <p className="text-danger mt-3">
+                    Please select a project to enable recording
+                  </p>
+              )}
+            </div>
+          </div>
+      );
+    }
+
+    return (
+        <div className="recorder-content">
+          <div className="recorder-toolbar-container">
+            <div className="recorder-toolbar-main">
+              {renderToolbar()}
+              <div className="toolbar-actions">
+                {renderConnectionStatus()}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAdvancedToolbar(!showAdvancedToolbar)}
+                    className="advanced-toolbar-toggle"
+                >
+                  <i className={`bi ${showAdvancedToolbar ? 'bi-chevron-up' : 'bi-chevron-down'} me-1`}></i>
+                  {showAdvancedToolbar ? 'Hide Advanced' : 'Show Advanced'}
+                </Button>
+              </div>
+            </div>
+
+            {showAdvancedToolbar && (
+                <AdvancedToolbar
+                    status={status}
+                    onFeatureSelect={handleAdvancedFeatureSelect}
+                />
+            )}
+          </div>
+
+          <div className="recorder-main">
+            <div className="recorder-left-panel">
+              <EventList
+                  events={events}
+                  selectedEvent={selectedEvent}
+                  onSelectEvent={(event) => selectEvent(event)}
+                  onAddEvent={(partialEvent) => {
+                    const event: RecordedEvent = {
+                      id: `custom-${Date.now()}`,
+                      type: partialEvent.type || RecordedEventType.CUSTOM,
+                      timestamp: partialEvent.timestamp || Date.now(),
+                      url: partialEvent.url || window.location.href,
+                      order: partialEvent.order || events.length + 1,
+                      ...partialEvent
+                    };
+                    addEvent(event);
+                    return Promise.resolve();
+                  }}
+                  disabled={status !== RecordingStatus.RECORDING && status !== RecordingStatus.PAUSED}
+                  isActive={status === RecordingStatus.RECORDING}
+              />
+            </div>
+            <div className="recorder-right-panel">
+              <ElementInspector element={inspectedElement} />
             </div>
           </div>
 
-          {showAdvancedToolbar && (
-            <AdvancedToolbar 
-              status={status}
-              onFeatureSelect={handleAdvancedFeatureSelect}
-            />
+          {error && (
+              <div className="recorder-error-message">
+                <div className="alert alert-danger">
+                  {error}
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      className="ms-2 text-danger"
+                      onClick={clearError}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
           )}
         </div>
-
-        <div className="recorder-main">
-          <div className="recorder-left-panel">
-            <EventList
-              events={events}
-              selectedEvent={selectedEvent}
-              onSelectEvent={selectEvent}
-              onAddEvent={addEvent}
-              disabled={status !== RecordingStatus.RECORDING && status !== RecordingStatus.PAUSED}
-              isActive={status === RecordingStatus.RECORDING}
-            />
-          </div>
-          <div className="recorder-right-panel">
-            <ElementInspector element={inspectedElement} />
-          </div>
-        </div>
-
-        {error && (
-          <div className="recorder-error-message">
-            <div className="alert alert-danger">{error}</div>
-          </div>
-        )}
-      </div>
     );
   };
 
@@ -348,9 +467,9 @@ const RecorderPanel: React.FC<RecorderPanelProps> = ({ projectId }) => {
         </Modal>
 
         {/* Feature Dialog for Advanced Features */}
-        <FeatureDialog 
-          feature={advancedFeature}
-          onClose={() => setAdvancedFeature(null)}
+        <FeatureDialog
+            feature={advancedFeature}
+            onClose={() => setAdvancedFeature(null)}
         />
       </div>
   );

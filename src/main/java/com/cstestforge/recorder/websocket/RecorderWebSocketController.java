@@ -52,6 +52,9 @@ public class RecorderWebSocketController {
         // Register the subscriber
         webSocketService.registerSessionSubscriber(sessionId, username);
         
+        // Update session activity
+        webSocketService.updateSessionActivity(sessionId);
+        
         // Get session information
         RecordingSession session = recorderService.getSession(sessionId);
         
@@ -61,6 +64,9 @@ public class RecorderWebSocketController {
             payload.put("status", session.getStatus());
             payload.put("eventCount", session.getEvents().size());
             payload.put("hasActiveSubscriber", true);
+            
+            // Send active status to session
+            webSocketService.notifySessionConnectionStatus(sessionId, true);
         } else {
             payload.put("error", "Session not found");
         }
@@ -78,88 +84,92 @@ public class RecorderWebSocketController {
      */
     @MessageMapping("/session/{sessionId}/command")
     @SendTo("/topic/session/{sessionId}")
-    public WebSocketMessage<?> handleSessionCommand(
+    public WebSocketMessage<Map<String, Object>> handleCommand(
             @DestinationVariable UUID sessionId,
             @Payload WebSocketMessage<Map<String, Object>> message,
             SimpMessageHeaderAccessor headerAccessor) {
         
-        String username = headerAccessor.getUser() != null ? 
-                headerAccessor.getUser().getName() : "anonymous";
+        // Update session activity
+        webSocketService.updateSessionActivity(sessionId);
         
-        String command = message.getType();
         Map<String, Object> payload = message.getPayload();
+        String command = (String) payload.getOrDefault("command", "UNKNOWN");
         
-        logger.debug("Received command {} for session {} from user {}", command, sessionId, username);
-        
-        // Process the command
         Map<String, Object> result = new HashMap<>();
         result.put("command", command);
+        result.put("timestamp", System.currentTimeMillis());
         
-        switch (command) {
-            case "PING":
-                result.put("status", "OK");
-                result.put("time", System.currentTimeMillis());
-                break;
-                
-            case "ADD_EVENT":
-                try {
-                    RecordedEvent event = (RecordedEvent) payload.get("event");
-                    boolean success = recorderService.addEvent(sessionId, event);
-                    result.put("success", success);
-                    result.put("eventId", event.getId().toString());
-                } catch (Exception e) {
-                    logger.error("Error adding event to session {}", sessionId, e);
-                    result.put("success", false);
-                    result.put("error", e.getMessage());
-                }
-                break;
-                
-            case "UPDATE_EVENT":
-                try {
-                    RecordedEvent event = (RecordedEvent) payload.get("event");
-                    UUID eventId = event.getId();
-                    result.put("success", true);
-                    result.put("eventId", eventId.toString());
-                    // The service will handle notifying clients about the update
-                } catch (Exception e) {
-                    logger.error("Error updating event in session {}", sessionId, e);
-                    result.put("success", false);
-                    result.put("error", e.getMessage());
-                }
-                break;
-                
-            case "DELETE_EVENT":
-                try {
-                    UUID eventId = UUID.fromString((String) payload.get("eventId"));
-                    // The service will handle notifying clients about the deletion
-                    result.put("success", true);
-                    result.put("eventId", eventId.toString());
-                } catch (Exception e) {
-                    logger.error("Error deleting event from session {}", sessionId, e);
-                    result.put("success", false);
-                    result.put("error", e.getMessage());
-                }
-                break;
-                
-            case "REORDER_EVENT":
-                try {
-                    UUID eventId = UUID.fromString((String) payload.get("eventId"));
-                    int newIndex = (int) payload.get("newIndex");
-                    // The service will handle notifying clients about the reorder
-                    result.put("success", true);
-                    result.put("eventId", eventId.toString());
-                    result.put("newIndex", newIndex);
-                } catch (Exception e) {
-                    logger.error("Error reordering event in session {}", sessionId, e);
-                    result.put("success", false);
-                    result.put("error", e.getMessage());
-                }
-                break;
-                
-            default:
-                logger.warn("Unknown command {} for session {}", command, sessionId);
-                result.put("status", "ERROR");
-                result.put("error", "Unknown command: " + command);
+        try {
+            switch (command) {
+                case "PING":
+                    result.put("status", "OK");
+                    result.put("time", System.currentTimeMillis());
+                    break;
+                    
+                case "ADD_EVENT":
+                    try {
+                        RecordedEvent event = (RecordedEvent) payload.get("event");
+                        boolean success = recorderService.addEvent(sessionId, event);
+                        result.put("success", success);
+                        result.put("eventId", event.getId().toString());
+                    } catch (Exception e) {
+                        logger.error("Error adding event to session {}", sessionId, e);
+                        result.put("success", false);
+                        result.put("error", e.getMessage());
+                    }
+                    break;
+                    
+                case "UPDATE_EVENT":
+                    try {
+                        RecordedEvent event = (RecordedEvent) payload.get("event");
+                        UUID eventId = event.getId();
+                        result.put("success", true);
+                        result.put("eventId", eventId.toString());
+                        // The service will handle notifying clients about the update
+                    } catch (Exception e) {
+                        logger.error("Error updating event in session {}", sessionId, e);
+                        result.put("success", false);
+                        result.put("error", e.getMessage());
+                    }
+                    break;
+                    
+                case "DELETE_EVENT":
+                    try {
+                        UUID eventId = UUID.fromString((String) payload.get("eventId"));
+                        // The service will handle notifying clients about the deletion
+                        result.put("success", true);
+                        result.put("eventId", eventId.toString());
+                    } catch (Exception e) {
+                        logger.error("Error deleting event from session {}", sessionId, e);
+                        result.put("success", false);
+                        result.put("error", e.getMessage());
+                    }
+                    break;
+                    
+                case "REORDER_EVENT":
+                    try {
+                        UUID eventId = UUID.fromString((String) payload.get("eventId"));
+                        int newIndex = (int) payload.get("newIndex");
+                        // The service will handle notifying clients about the reorder
+                        result.put("success", true);
+                        result.put("eventId", eventId.toString());
+                        result.put("newIndex", newIndex);
+                    } catch (Exception e) {
+                        logger.error("Error reordering event in session {}", sessionId, e);
+                        result.put("success", false);
+                        result.put("error", e.getMessage());
+                    }
+                    break;
+                    
+                default:
+                    logger.warn("Unknown command {} for session {}", command, sessionId);
+                    result.put("status", "ERROR");
+                    result.put("error", "Unknown command: " + command);
+            }
+        } catch (Exception e) {
+            logger.error("Error processing command {} for session {}", command, sessionId, e);
+            result.put("status", "ERROR");
+            result.put("error", e.getMessage());
         }
         
         return WebSocketMessage.of(command + "_RESULT", result);

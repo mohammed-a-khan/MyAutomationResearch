@@ -25,6 +25,7 @@ import TestRunnerPanel from './components/runner/TestRunnerPanel';
 import NotificationsPanel from './components/notifications/NotificationsPanel';
 import SettingsPanel from './components/settings/SettingsPanel';
 import AdoIntegrationPanel from './components/ado/AdoIntegrationPanel';
+import RecordingsList from './components/recorder/RecordingsList';
 import NotFound from './components/common/NotFound';
 
 // Import styles
@@ -100,6 +101,24 @@ const App: React.FC = () => {
 
             {/* Add project-specific recorder route */}
             <Route path="/recorder/:projectId" element={
+              <ProjectProvider>
+                <RecorderProvider>
+                  <RecorderPanel />
+                </RecorderProvider>
+              </ProjectProvider>
+            } />
+
+            {/* Add recordings list route */}
+            <Route path="/recordings" element={
+              <ProjectProvider>
+                <RecorderProvider>
+                  <RecordingsList />
+                </RecorderProvider>
+              </ProjectProvider>
+            } />
+
+            {/* Add recording detail view route */}
+            <Route path="/recorder/view/:recordingId" element={
               <ProjectProvider>
                 <RecorderProvider>
                   <RecorderPanel />

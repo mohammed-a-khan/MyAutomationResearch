@@ -132,6 +132,14 @@ public abstract class AbstractBrowserInstance implements BrowserInstance {
     }
     
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public BrowserType getBrowserType() {
+        return browserType;
+    }
+    
+    /**
      * Start the browser implementation.
      *
      * @param timeout Timeout value
